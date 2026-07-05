@@ -1,1 +1,797 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>DairyDash – Farm. Earn. Cash Out.</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- Monetag Rewarded Interstitial SDK -->
+<script src='//libtl.com/sdk.js' data-zone='11239209' data-sdk='show_11239209'></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e1a; --bg2:#0f1424; --panel:#141a2e; --panel2:#1a2140;
+    --line:rgba(255,255,255,.06); --line2:rgba(255,255,255,.12);
+    --text:#eef1ff; --muted:#8892b8; --dim:#5a627e;
+    --milk:#e8f0ff; --gold:#ffcf5c; --pink:#ff6ba6; --mint:#4ee3b3;
+    --violet:#8b5cf6; --cyan:#38e1ff; --red:#ff5b6b;
+    --grad1:linear-gradient(135deg,#8b5cf6 0%,#38e1ff 100%);
+    --grad2:linear-gradient(135deg,#ffcf5c 0%,#ff6ba6 100%);
+    --grad3:linear-gradient(135deg,#4ee3b3 0%,#38e1ff 100%);
+    --grad-milk:linear-gradient(135deg,#ffffff 0%,#c7d2fe 100%);
+    --shadow:0 20px 60px -20px rgba(139,92,246,.35);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;overflow-x:hidden;overscroll-behavior-y:none}
+  body{min-height:100vh;background:radial-gradient(1200px 600px at 20% -10%,rgba(139,92,246,.18),transparent 60%),radial-gradient(900px 500px at 110% 20%,rgba(56,225,255,.12),transparent 60%),var(--bg);padding-bottom:96px}
+  button{font-family:inherit;cursor:pointer;border:none;color:inherit;background:none}
+  img{display:block;max-width:100%}
+  h1,h2,h3,h4{margin:0;font-family:'Space Grotesk',Inter,sans-serif;letter-spacing:-.02em}
+  .mono{font-variant-numeric:tabular-nums}
+
+  /* LOADING */
+  #loader{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#1a2140 0%,#070912 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .6s,visibility .6s}
+  #loader.hide{opacity:0;visibility:hidden}
+  .cow-wrap{position:relative;width:140px;height:140px;margin-bottom:28px}
+  .cow-ring{position:absolute;inset:0;border-radius:50%;border:2px solid transparent;border-top-color:var(--violet);border-right-color:var(--cyan);animation:spin 1.4s linear infinite}
+  .cow-ring.r2{inset:12px;border-top-color:var(--gold);border-right-color:var(--pink);animation-duration:1.9s;animation-direction:reverse}
+  .cow-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:64px;animation:bob 1.6s ease-in-out infinite}
+  .drop{position:absolute;top:70%;left:50%;width:8px;height:8px;border-radius:50%;background:var(--milk);opacity:0;animation:drip 1.6s ease-in infinite}
+  .drop:nth-child(2){animation-delay:.4s;left:45%}
+  .drop:nth-child(3){animation-delay:.8s;left:55%}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  @keyframes drip{0%{opacity:0;transform:translate(-50%,0) scale(.6)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,40px) scale(1.2)}}
+  #loader h1{font-size:34px;font-weight:800;background:var(--grad1);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:6px}
+  #loader p{color:var(--muted);font-size:13px;margin:0 0 24px;letter-spacing:.3px}
+  .lbar{width:220px;height:6px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+  .lbar>span{display:block;height:100%;width:0;background:var(--grad1);border-radius:99px;transition:width .3s}
+  .lstage{color:var(--dim);font-size:11px;margin-top:12px;letter-spacing:.4px;text-transform:uppercase}
+
+  /* APP SHELL */
+  #app{max-width:520px;margin:0 auto;padding:14px 16px 20px;display:none;animation:fadeUp .5s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* TOP BAR */
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:42px;height:42px;border-radius:14px;background:var(--grad1);display:grid;place-items:center;font-size:22px;box-shadow:var(--shadow)}
+  .brand h2{font-size:16px;font-weight:700;line-height:1.1}
+  .brand small{color:var(--muted);font-size:11px}
+  .tools{display:flex;gap:8px;align-items:center}
+  .icon-btn{width:38px;height:38px;border-radius:12px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;font-size:16px;position:relative;transition:transform .15s}
+  .icon-btn:active{transform:scale(.94)}
+  .badge{position:absolute;top:-4px;right:-4px;background:var(--red);font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:99px;display:grid;place-items:center;padding:0 4px}
+  .avatar{width:38px;height:38px;border-radius:12px;background:var(--grad2);display:grid;place-items:center;font-weight:700;font-size:13px;position:relative}
+  .avatar::after{content:'';position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;background:var(--mint);border:2px solid var(--bg);border-radius:99px}
+
+  /* PAGES */
+  .page{display:none;animation:fadeUp .35s ease}
+  .page.active{display:block}
+
+  /* SECTION TITLE */
+  .stitle{display:flex;justify-content:space-between;align-items:baseline;margin:22px 4px 12px}
+  .stitle h3{font-size:15px;font-weight:700}
+  .stitle a{color:var(--muted);font-size:12px}
+
+  /* HERO BALANCE */
+  .hero{position:relative;padding:22px;border-radius:24px;background:linear-gradient(135deg,#1e1749 0%,#0b1a3e 60%,#0a2540 100%);border:1px solid var(--line2);overflow:hidden}
+  .hero::before{content:'';position:absolute;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.55),transparent 70%);top:-80px;right:-60px;filter:blur(20px)}
+  .hero::after{content:'';position:absolute;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(56,225,255,.4),transparent 70%);bottom:-80px;left:-40px;filter:blur(20px)}
+  .hero > *{position:relative;z-index:1}
+  .hero-lbl{color:var(--muted);font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:600}
+  .hero-bal{display:flex;align-items:baseline;gap:10px;margin:8px 0 4px}
+  .hero-bal .num{font-size:42px;font-weight:800;letter-spacing:-.03em;background:var(--grad-milk);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero-bal .u{color:var(--muted);font-weight:600;font-size:14px}
+  .hero-sub{display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+  .hero-sub .usd{color:#c7d2fe;font-size:13px;font-weight:500}
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:99px;background:rgba(78,227,179,.14);color:var(--mint);font-size:11px;font-weight:600}
+  .chip.warn{background:rgba(255,207,92,.14);color:var(--gold)}
+  .chip.pink{background:rgba(255,107,166,.14);color:var(--pink)}
+  .hero-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+  .hero-actions button{padding:12px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid var(--line2);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;backdrop-filter:blur(10px);transition:transform .15s}
+  .hero-actions button:active{transform:scale(.97)}
+  .hero-actions button.primary{background:var(--grad-milk);color:#0a0e1a;border-color:transparent}
+
+  /* STAT GRID */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid.g4{grid-template-columns:1fr 1fr}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px}
+  .card .cl{color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;display:flex;align-items:center;gap:6px}
+  .card .cv{font-size:22px;font-weight:700;margin-top:6px;letter-spacing:-.02em}
+  .card .cs{color:var(--dim);font-size:11px;margin-top:2px}
+  .card .cs.up{color:var(--mint)}
+
+  /* DAILY REWARD */
+  .daily{position:relative;padding:18px;border-radius:20px;background:linear-gradient(135deg,#3a1f5c 0%,#5c1a3a 100%);border:1px solid rgba(255,107,166,.25);overflow:hidden;display:flex;align-items:center;gap:14px}
+  .daily .fire{font-size:44px;filter:drop-shadow(0 4px 12px rgba(255,107,166,.5));animation:bob 2s ease-in-out infinite}
+  .daily .info{flex:1;min-width:0}
+  .daily .info b{font-size:15px;font-weight:700;display:block}
+  .daily .info p{margin:2px 0 0;color:#e0c8ff;font-size:12px}
+  .daily .info .streak{margin-top:6px;font-size:11px;color:var(--gold);font-weight:600}
+  .daily button{padding:10px 16px;border-radius:12px;background:var(--grad2);color:#1a0a1a;font-weight:700;font-size:12px;white-space:nowrap;box-shadow:0 8px 20px -6px rgba(255,107,166,.5)}
+  .daily button:active{transform:scale(.96)}
+  .daily .cd{color:#f0d0ff;font-size:11px;margin-top:8px;letter-spacing:.3px}
+
+  /* QUICK ACTIONS */
+  .qa-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .qa{padding:14px 8px;border-radius:16px;background:var(--panel);border:1px solid var(--line);text-align:center;transition:transform .15s}
+  .qa:active{transform:scale(.96)}
+  .qa .qi{font-size:24px;margin-bottom:6px}
+  .qa .qt{font-size:11px;font-weight:600;color:var(--text)}
+  .qa .qs{font-size:10px;color:var(--muted);margin-top:2px}
+
+  /* EARN PAGE - MARKET */
+  .prodbar{padding:16px;border-radius:18px;background:var(--panel);border:1px solid var(--line);margin-bottom:12px}
+  .prodbar .row{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+  .prodbar .eff{margin-top:10px}
+  .progress{height:6px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin-top:6px}
+  .progress>span{display:block;height:100%;background:var(--grad3);border-radius:99px;transition:width .5s}
+
+  .bottle{padding:16px;border-radius:18px;background:var(--panel);border:1px solid var(--line);margin-bottom:10px;display:flex;gap:14px;align-items:center;position:relative;overflow:hidden}
+  .bottle::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--rare-color,var(--muted))}
+  .bottle[data-r="common"]{--rare-color:#94a3b8}
+  .bottle[data-r="rare"]{--rare-color:#38e1ff}
+  .bottle[data-r="epic"]{--rare-color:#8b5cf6}
+  .bottle[data-r="legendary"]{--rare-color:#ffcf5c}
+  .bicon{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;font-size:28px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+  .binfo{flex:1;min-width:0}
+  .btitle{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px}
+  .btag{font-size:9px;padding:2px 6px;border-radius:6px;font-weight:700;letter-spacing:.05em;background:var(--rare-color);color:#0a0e1a;text-transform:uppercase}
+  .bdesc{color:var(--muted);font-size:11px;margin:3px 0}
+  .brate{font-size:12px;color:var(--mint);font-weight:600}
+  .bbuy{padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid var(--line2);font-weight:700;font-size:12px;white-space:nowrap}
+  .bbuy.can{background:var(--grad1);border-color:transparent}
+  .bbuy:disabled{opacity:.4}
+
+  /* TASKS PAGE */
+  .tabs{display:flex;gap:6px;padding:4px;background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:8px 14px;border-radius:10px;font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap;flex-shrink:0}
+  .tab.on{background:var(--grad1);color:#fff}
+  .task{padding:14px;border-radius:16px;background:var(--panel);border:1px solid var(--line);margin-bottom:10px;display:flex;gap:12px;align-items:center}
+  .ticon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:18px;background:rgba(139,92,246,.15);color:var(--violet);flex-shrink:0}
+  .tinfo{flex:1;min-width:0}
+  .tinfo b{font-size:13px;font-weight:600;display:block}
+  .tinfo p{margin:2px 0 0;color:var(--muted);font-size:11px}
+  .treward{font-size:11px;color:var(--gold);font-weight:700;margin-top:3px}
+  .tbtn{padding:8px 14px;border-radius:10px;background:var(--grad3);color:#0a1a15;font-weight:700;font-size:11px;white-space:nowrap}
+  .tbtn.done{background:rgba(78,227,179,.12);color:var(--mint);cursor:default}
+
+  /* REFER */
+  .refhero{padding:22px;border-radius:22px;background:linear-gradient(135deg,#0f3d2e 0%,#0f2c4d 100%);border:1px solid rgba(78,227,179,.2);text-align:center;position:relative;overflow:hidden}
+  .refhero::before{content:'👥';position:absolute;font-size:180px;opacity:.04;right:-20px;top:-40px}
+  .refhero h2{font-size:22px;margin-bottom:6px}
+  .refhero p{color:var(--muted);font-size:13px;margin:0 0 16px}
+  .refhero .big{font-size:36px;font-weight:800;background:var(--grad3);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .refstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+  .refstats>div{padding:10px;border-radius:12px;background:rgba(0,0,0,.25)}
+  .refstats b{font-size:16px;display:block}
+  .refstats span{font-size:10px;color:var(--muted)}
+  .reflink{margin-top:14px;padding:12px;border-radius:12px;background:rgba(0,0,0,.3);border:1px dashed var(--line2);display:flex;gap:8px;align-items:center}
+  .reflink code{flex:1;font-size:11px;color:#c7d2fe;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Space Grotesk',mono}
+  .reflink button{padding:8px 12px;background:var(--grad3);color:#0a1a15;font-weight:700;border-radius:8px;font-size:11px}
+
+  .tier{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:var(--panel);border:1px solid var(--line);margin-bottom:8px}
+  .tier .em{font-size:24px}
+  .tier .ti{flex:1}
+  .tier b{font-size:13px}
+  .tier p{margin:2px 0 0;font-size:11px;color:var(--muted)}
+  .tier .pct{font-weight:700;color:var(--mint);font-size:13px}
+
+  /* LEADERBOARD */
+  .lb-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--panel);border:1px solid var(--line);margin-bottom:8px}
+  .lb-rank{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-size:14px;background:rgba(255,255,255,.05);flex-shrink:0}
+  .lb-rank.g1{background:linear-gradient(135deg,#ffcf5c,#ff9548);color:#3a1a00}
+  .lb-rank.g2{background:linear-gradient(135deg,#e0e7ff,#94a3b8);color:#1a1a2e}
+  .lb-rank.g3{background:linear-gradient(135deg,#ff9c6b,#c76a3c);color:#2e1300}
+  .lb-av{width:36px;height:36px;border-radius:50%;background:var(--grad2);display:grid;place-items:center;font-weight:700;font-size:12px;flex-shrink:0}
+  .lb-info{flex:1;min-width:0}
+  .lb-info b{font-size:13px;display:block}
+  .lb-info span{font-size:11px;color:var(--muted)}
+  .lb-val{font-size:13px;font-weight:700;color:var(--gold);text-align:right}
+  .lb-val small{display:block;font-size:10px;color:var(--muted);font-weight:400}
+
+  /* PROFILE */
+  .prof-head{padding:22px;border-radius:22px;background:linear-gradient(135deg,#2a1747 0%,#1a2e5c 100%);border:1px solid var(--line2);position:relative;overflow:hidden}
+  .prof-top{display:flex;gap:14px;align-items:center}
+  .pav{width:64px;height:64px;border-radius:20px;background:var(--grad2);display:grid;place-items:center;font-weight:800;font-size:24px;box-shadow:var(--shadow)}
+  .pmeta h3{font-size:18px}
+  .pmeta p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+  .plvl{margin-top:14px}
+  .plvl .row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+  .plvl .row b{color:var(--gold)}
+  .conv{padding:16px;border-radius:18px;background:var(--panel);border:1px solid var(--line);margin-top:14px}
+  .conv h4{font-size:14px;margin-bottom:10px;display:flex;justify-content:space-between}
+  .conv h4 span{color:var(--mint);font-size:11px;font-weight:600}
+  .conv-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .conv-row input{flex:1;padding:12px 14px;border-radius:12px;background:var(--bg2);border:1px solid var(--line2);color:var(--text);font-size:14px;font-weight:600;font-family:inherit}
+  .conv-row input:focus{outline:none;border-color:var(--violet)}
+  .conv-row .max{padding:12px;background:rgba(139,92,246,.15);color:var(--violet);border-radius:12px;font-weight:700;font-size:11px}
+  .conv-get{padding:10px;border-radius:10px;background:rgba(78,227,179,.08);color:var(--mint);font-size:12px;text-align:center;margin-bottom:10px}
+  .conv-btn{width:100%;padding:14px;border-radius:14px;background:var(--grad3);color:#0a1a15;font-weight:700;font-size:14px}
+  .conv-btn:disabled{opacity:.4}
+
+  /* BOTTOM NAV */
+  .nav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,14,26,.85);backdrop-filter:blur(20px);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom));z-index:50}
+  .nav-inner{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:2px}
+  .nav-btn{padding:10px 4px;border-radius:12px;text-align:center;color:var(--dim);transition:all .2s}
+  .nav-btn .ni{font-size:20px;line-height:1}
+  .nav-btn .nl{font-size:9px;font-weight:600;margin-top:4px;letter-spacing:.03em}
+  .nav-btn.on{color:var(--text);background:linear-gradient(180deg,rgba(139,92,246,.15),transparent)}
+  .nav-btn.on .ni{filter:drop-shadow(0 2px 6px rgba(139,92,246,.5))}
+
+  /* TOAST */
+  #toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--panel2);border:1px solid var(--line2);padding:12px 18px;border-radius:14px;font-size:13px;font-weight:600;z-index:9998;transition:transform .3s;box-shadow:0 20px 40px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px}
+  #toast.show{transform:translateX(-50%) translateY(0)}
+  #toast.ok{border-color:var(--mint);color:var(--mint)}
+  #toast.err{border-color:var(--red);color:var(--red)}
+
+  /* FLOATING REWARD */
+  .float-reward{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:38px;font-weight:800;color:var(--gold);z-index:9997;pointer-events:none;text-shadow:0 4px 20px rgba(255,207,92,.6);animation:floatUp 1.2s ease forwards}
+  @keyframes floatUp{0%{opacity:0;transform:translate(-50%,-30%) scale(.5)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-120%) scale(.9)}}
+
+  .empty{text-align:center;color:var(--muted);padding:30px;font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loader">
+  <div class="cow-wrap">
+    <div class="cow-ring"></div>
+    <div class="cow-ring r2"></div>
+    <div class="cow-emoji">🐄</div>
+    <div class="drop"></div><div class="drop"></div><div class="drop"></div>
+  </div>
+  <h1>DairyDash</h1>
+  <p>Farm • Earn • Cash Out</p>
+  <div class="lbar"><span id="lbar"></span></div>
+  <div class="lstage" id="lstage">Warming up the barn…</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">🥛</div>
+      <div><h2>DairyDash</h2><small id="season">Season 2 · Summer Harvest</small></div>
+    </div>
+    <div class="tools">
+      <button class="icon-btn" onclick="quickBoost()">⚡</button>
+      <button class="icon-btn" onclick="toast('No new alerts','ok')">🔔<span class="badge" id="notif">3</span></button>
+      <div class="avatar" id="avatar">L</div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="page active" data-page="home">
+    <div class="hero">
+      <div class="hero-lbl">Milk Balance</div>
+      <div class="hero-bal"><span class="num mono" id="balance">0</span><span class="u">MLK</span></div>
+      <div class="hero-sub">
+        <span class="usd mono" id="usdEq">≈ $0.0000 USDT</span>
+        <span class="chip" id="chDelta">+0 24h ▲</span>
+      </div>
+      <div class="hero-actions">
+        <button onclick="claimAllHome()">💰 Collect</button>
+        <button class="primary" onclick="go('earn')">🛒 Buy Bottles</button>
+      </div>
+    </div>
+
+    <div class="stitle"><h3>Farm Stats</h3><a onclick="go('earn')">Manage →</a></div>
+    <div class="grid g4" style="grid-template-columns:1fr 1fr">
+      <div class="card"><div class="cl">⚡ Milk / hr</div><div class="cv mono" id="rate">0</div><div class="cs up">▲ Live</div></div>
+      <div class="card"><div class="cl">🍼 Bottles</div><div class="cv mono" id="slots">0/10</div><div class="cs">Slots used</div></div>
+      <div class="card"><div class="cl">⏱ Pending</div><div class="cv mono" id="pending">0</div><div class="cs">Ready to claim</div></div>
+      <div class="card"><div class="cl">🏆 Lifetime</div><div class="cv mono" id="lifetime">0</div><div class="cs">Total earned</div></div>
+    </div>
+
+    <div class="stitle"><h3>Daily Reward</h3><span style="color:var(--gold);font-size:12px;font-weight:600" id="streakTop">🔥 0 day</span></div>
+    <div class="daily">
+      <div class="fire">🎁</div>
+      <div class="info">
+        <b>+15 MLK Daily Bonus</b>
+        <p>Watch a quick ad to claim your reward</p>
+        <div class="streak" id="streakLine">Streak: 0 days</div>
+        <div class="cd" id="dailyCd">Ready to claim!</div>
+      </div>
+      <button onclick="claimDaily()" id="dailyBtn">Watch Ad</button>
+    </div>
+
+    <div class="stitle"><h3>Quick Actions</h3></div>
+    <div class="qa-row">
+      <button class="qa" onclick="quickBoost()"><div class="qi">⚡</div><div class="qt">2x Boost</div><div class="qs">30 min · Ad</div></button>
+      <button class="qa" onclick="freeMilk()"><div class="qi">🥛</div><div class="qt">Free Milk</div><div class="qs" id="freeCd">Ready</div></button>
+      <button class="qa" onclick="go('tasks')"><div class="qi">✅</div><div class="qt">Tasks</div><div class="qs">Earn more</div></button>
+    </div>
+  </div>
+
+  <!-- EARN -->
+  <div class="page" data-page="earn">
+    <div class="stitle"><h3 style="font-size:20px">Marketplace</h3><span style="color:var(--muted);font-size:12px" id="bottleCount">0/10 bottles</span></div>
+    <div class="prodbar">
+      <div class="row"><span style="color:var(--muted)">Total production</span><b class="mono" id="ePrint">0 MLK/hr</b></div>
+      <div class="row" style="margin-top:8px"><span style="color:var(--muted)">Pending</span><b class="mono" style="color:var(--gold)" id="ePending">0 MLK</b></div>
+      <div class="row" style="margin-top:8px"><span style="color:var(--muted)">Efficiency</span><b class="mono" id="effVal">100%</b></div>
+      <div class="progress eff"><span id="effBar" style="width:100%"></span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+        <button class="bbuy can" onclick="claimAllHome()">Claim All</button>
+        <button class="bbuy" onclick="freeMilk()" id="freeBtn">Free Milk</button>
+      </div>
+    </div>
+    <div id="bottleList"></div>
+  </div>
+
+  <!-- TASKS -->
+  <div class="page" data-page="tasks">
+    <div class="stitle"><h3 style="font-size:20px">Tasks</h3><span style="color:var(--muted);font-size:12px" id="taskProg">0/0 done</span></div>
+    <div class="progress" style="margin-bottom:14px"><span id="taskBar" style="width:0"></span></div>
+    <div class="tabs">
+      <button class="tab on" data-cat="all" onclick="filterTasks('all')">All</button>
+      <button class="tab" data-cat="social" onclick="filterTasks('social')">Social</button>
+      <button class="tab" data-cat="ads" onclick="filterTasks('ads')">Ads</button>
+      <button class="tab" data-cat="refer" onclick="filterTasks('refer')">Refer</button>
+      <button class="tab" data-cat="bonus" onclick="filterTasks('bonus')">Bonus</button>
+    </div>
+    <div id="taskList"></div>
+  </div>
+
+  <!-- REFER -->
+  <div class="page" data-page="refer">
+    <div class="refhero">
+      <h2>Invite Friends 🤝</h2>
+      <p>Earn 150 MLK per referral + 20% ad income</p>
+      <div class="big mono" id="refEarned">0 <span style="font-size:16px;color:var(--muted)">MLK earned</span></div>
+      <div class="refstats">
+        <div><b class="mono" id="refCount">0</b><span>Friends</span></div>
+        <div><b class="mono" id="refActive">0</b><span>Active</span></div>
+        <div><b class="mono">20%</b><span>Ad Cut</span></div>
+      </div>
+      <div class="reflink">
+        <code id="refLink">https://t.me/dairydash_bot/farm?startapp=ABC</code>
+        <button onclick="copyRef()">Copy</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <button class="bbuy can" onclick="shareRef()">📤 Share</button>
+        <button class="bbuy" onclick="simRefer()">+ Test Friend</button>
+      </div>
+    </div>
+    <div class="stitle"><h3>Referral Tiers</h3></div>
+    <div class="tier"><div class="em">🥉</div><div class="ti"><b>Bronze · 5 refs</b><p>Unlock +10% bonus milk</p></div><div class="pct">+10%</div></div>
+    <div class="tier"><div class="em">🥈</div><div class="ti"><b>Silver · 25 refs</b><p>Priority claims + 25%</p></div><div class="pct">+25%</div></div>
+    <div class="tier"><div class="em">🥇</div><div class="ti"><b>Gold · 100 refs</b><p>Exclusive Golden Milk +50%</p></div><div class="pct">+50%</div></div>
+    <div class="tier"><div class="em">💎</div><div class="ti"><b>Diamond · 500 refs</b><p>Double everything · Whale status</p></div><div class="pct">+100%</div></div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="page" data-page="lb">
+    <div class="stitle"><h3 style="font-size:20px">Leaderboard</h3><span style="color:var(--muted);font-size:12px">Weekly</span></div>
+    <div class="tabs">
+      <button class="tab on" onclick="lbTab(this,'earn')">Top Earners</button>
+      <button class="tab" onclick="lbTab(this,'ref')">Referrals</button>
+      <button class="tab" onclick="lbTab(this,'bal')">Balance</button>
+    </div>
+    <div id="lbList"></div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="page" data-page="profile">
+    <div class="prof-head">
+      <div class="prof-top">
+        <div class="pav" id="pav">L</div>
+        <div class="pmeta">
+          <h3 id="pname">@player</h3>
+          <p>RARE · DairyDash · 🇱🇰</p>
+        </div>
+      </div>
+      <div class="plvl">
+        <div class="row"><span>⭐ Level <b id="plvl">1</b></span><b class="mono"><span id="pxp">0</span>/<span id="pxpMax">100</span> XP</b></div>
+        <div class="progress"><span id="xpBar" style="width:0"></span></div>
+      </div>
+      <div class="grid" style="margin-top:14px">
+        <div style="padding:12px;border-radius:14px;background:rgba(0,0,0,.25)"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Balance</div><div class="mono" style="font-size:22px;font-weight:800;margin-top:4px" id="pbal">0</div><div style="font-size:11px;color:var(--muted)" id="pbalUsd">≈ $0.00</div></div>
+        <div style="padding:12px;border-radius:14px;background:rgba(0,0,0,.25)"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">USDT Ready</div><div class="mono" style="font-size:22px;font-weight:800;margin-top:4px;color:var(--mint)" id="pusdt">0.0000</div><div style="font-size:11px;color:var(--muted)">Withdrawable</div></div>
+      </div>
+    </div>
+
+    <div class="stitle"><h3>Earnings Snapshot</h3></div>
+    <div class="grid">
+      <div class="card"><div class="cl">Today</div><div class="cv mono" id="eToday">0</div></div>
+      <div class="card"><div class="cl">This Week</div><div class="cv mono" id="eWeek">0</div></div>
+      <div class="card"><div class="cl">This Month</div><div class="cv mono" id="eMonth">0</div></div>
+      <div class="card"><div class="cl">All Time</div><div class="cv mono" id="eAll">0</div></div>
+    </div>
+
+    <div class="conv">
+      <h4>Convert Milk → USDT <span>0% Fee</span></h4>
+      <div class="conv-row">
+        <input type="number" id="convAmt" placeholder="Amount MLK" oninput="calcConv()" />
+        <button class="max" onclick="maxConv()">MAX</button>
+      </div>
+      <div class="conv-get">You get: <b id="convGet" class="mono">0.0000 USDT</b></div>
+      <button class="conv-btn" onclick="doConvert()">Convert Now</button>
+    </div>
+
+    <div class="stitle"><h3>Actions</h3></div>
+    <div class="qa-row">
+      <button class="qa" onclick="toast('Set your USDT wallet','ok')"><div class="qi">🏦</div><div class="qt">Set Address</div></button>
+      <button class="qa" onclick="toast('Min withdraw: 1 USDT','err')"><div class="qi">💸</div><div class="qt">Withdraw</div></button>
+      <button class="qa" onclick="resetGame()"><div class="qi">🔄</div><div class="qt">Reset</div></button>
+    </div>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <button class="nav-btn on" data-nav="home" onclick="go('home')"><div class="ni">🏠</div><div class="nl">Home</div></button>
+    <button class="nav-btn" data-nav="earn" onclick="go('earn')"><div class="ni">🥛</div><div class="nl">Earn</div></button>
+    <button class="nav-btn" data-nav="tasks" onclick="go('tasks')"><div class="ni">✅</div><div class="nl">Tasks</div></button>
+    <button class="nav-btn" data-nav="refer" onclick="go('refer')"><div class="ni">🤝</div><div class="nl">Refer</div></button>
+    <button class="nav-btn" data-nav="lb" onclick="go('lb')"><div class="ni">🏆</div><div class="nl">Ranks</div></button>
+    <button class="nav-btn" data-nav="profile" onclick="go('profile')"><div class="ni">👤</div><div class="nl">Profile</div></button>
+  </div>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+/* ============ STATE ============ */
+const RATE_USDT = 0.00005; // 1 MLK = 0.00005 USDT
+const BOTTLE_DEFS = [
+  {id:'common',   name:'Classic Milk',  emoji:'🥛', tag:'COMMON',    rate:30,  price:100,   desc:'Reliable starter milk'},
+  {id:'rare',     name:'Blue Milk',     emoji:'🧊', tag:'RARE',      rate:75,  price:500,   desc:'Packed with minerals'},
+  {id:'epic',     name:'Golden Milk',   emoji:'🍯', tag:'EPIC',      rate:200, price:2500,  desc:'Premium nutrition'},
+  {id:'legendary',name:'Diamond Milk',  emoji:'💎', tag:'LEGENDARY', rate:500, price:10000, desc:'Ultimate returns'}
+];
+const TASK_DEFS = [
+  {id:'t_join_tg', cat:'social', icon:'📢', name:'Join Telegram Channel', reward:15, url:'https://t.me/dairydash'},
+  {id:'t_follow_x',cat:'social', icon:'🐦', name:'Follow on X (Twitter)', reward:15, url:'https://x.com/'},
+  {id:'t_yt',      cat:'social', icon:'▶️', name:'Subscribe on YouTube',  reward:20, url:'https://youtube.com/'},
+  {id:'t_ig',      cat:'social', icon:'📸', name:'Follow on Instagram',   reward:15, url:'https://instagram.com/'},
+  {id:'t_ad1',     cat:'ads',    icon:'🎬', name:'Watch 1 Ad',            reward:5,  ad:true},
+  {id:'t_ad5',     cat:'ads',    icon:'📺', name:'Watch 5 Ads Bundle',    reward:35, ad:true, count:5},
+  {id:'t_ad10',    cat:'ads',    icon:'🎥', name:'Watch 10 Ads Marathon', reward:80, ad:true, count:10},
+  {id:'t_ref1',    cat:'refer',  icon:'👥', name:'Invite 1 Friend',       reward:50,  req:{refs:1}},
+  {id:'t_ref5',    cat:'refer',  icon:'🤝', name:'Invite 5 Friends',      reward:300, req:{refs:5}},
+  {id:'t_bonus1',  cat:'bonus',  icon:'⭐', name:'Reach Level 5',         reward:100, req:{lvl:5}},
+  {id:'t_bonus2',  cat:'bonus',  icon:'🎁', name:'Own a Rare Bottle',     reward:200, req:{bottle:'rare'}},
+  {id:'t_bonus3',  cat:'bonus',  icon:'👑', name:'Reach Level 10',        reward:500, req:{lvl:10}}
+];
+const LB_SEED = [
+  ['CryptoKing',1234567],['MilkMaster',987654],['FarmQueen',765432],['DairyLord',543210],
+  ['CowWhisperer',421095],['HayBaron',389421],['BarnStar',312890],['MooMagnet',276541],
+  ['UdderPro',241203],['ChurnKing',198420]
+];
+
+const DEFAULT = {
+  balance: 100, lifetime: 100, bottles: [], lastTick: Date.now(),
+  freeMilkNext: 0, dailyNext: 0, streak: 0,
+  refs: 0, refEarned: 0, refCode: 'DD'+Math.random().toString(36).slice(2,8).toUpperCase(),
+  tasks: {}, adsWatched: 0, xp: 0, lvl: 1,
+  today:{d:'',v:0}, week:{d:'',v:0}, month:{d:'',v:0}, all:0,
+  boostUntil: 0, notif: 3, usdt: 0,
+  user: 'Player'
+};
+
+let S = load();
+
+function load(){
+  try{const s = JSON.parse(localStorage.getItem('dairydash')); return {...DEFAULT, ...s, today:{...DEFAULT.today,...(s?.today||{})}, week:{...DEFAULT.week,...(s?.week||{})}, month:{...DEFAULT.month,...(s?.month||{})}};}
+  catch{return {...DEFAULT}}
+}
+function save(){localStorage.setItem('dairydash', JSON.stringify(S))}
+
+/* ============ TELEGRAM ============ */
+let TG = null;
+try{ TG = window.Telegram?.WebApp; if(TG){TG.ready();TG.expand();TG.setHeaderColor?.('#0a0e1a');
+  const u = TG.initDataUnsafe?.user;
+  if(u){S.user = u.first_name || u.username || 'Player'; save();}
+}}catch(e){}
+
+/* ============ LOADING ============ */
+const stages = ['Warming up the barn…','Feeding the cows 🐄','Filling milk bottles 🥛','Connecting to blockchain ⛓','Ready!'];
+let lp = 0;
+const li = setInterval(()=>{
+  lp += Math.random()*18 + 6;
+  if(lp>100)lp=100;
+  document.getElementById('lbar').style.width=lp+'%';
+  document.getElementById('lstage').textContent = stages[Math.min(stages.length-1, Math.floor(lp/22))];
+  if(lp>=100){clearInterval(li); setTimeout(startApp, 400)}
+},220);
+
+function startApp(){
+  document.getElementById('loader').classList.add('hide');
+  document.getElementById('app').style.display='block';
+  offlineEarnings();
+  renderAll();
+  setInterval(tick, 1000);
+  setInterval(renderTop, 1500);
+}
+
+/* ============ CORE ============ */
+function totalRate(){
+  const base = S.bottles.reduce((a,b)=>a+(BOTTLE_DEFS.find(d=>d.id===b.id)?.rate||0),0);
+  const boost = S.boostUntil > Date.now() ? 2 : 1;
+  const refBonus = S.refs>=500?2:S.refs>=100?1.5:S.refs>=25?1.25:S.refs>=5?1.1:1;
+  return Math.floor(base * boost * refBonus);
+}
+function pendingMilk(){
+  const dt = (Date.now() - S.lastTick)/1000;
+  return (totalRate()/3600) * dt;
+}
+function collect(){
+  const g = pendingMilk();
+  if(g<0.01) return 0;
+  S.balance += g; S.lifetime += g;
+  const d = new Date().toDateString();
+  if(S.today.d!==d){S.today.d=d;S.today.v=0}
+  S.today.v += g; S.week.v += g; S.month.v += g; S.all += g;
+  S.lastTick = Date.now();
+  gainXP(Math.floor(g/10));
+  save();
+  return g;
+}
+function offlineEarnings(){
+  const g = pendingMilk();
+  if(g > 1){ collect(); toast(`Welcome back! +${fmt(g)} MLK offline`, 'ok'); }
+  else S.lastTick = Date.now();
+}
+function tick(){ renderTop(); renderPending(); }
+
+function gainXP(n){
+  S.xp += n;
+  const need = S.lvl*100;
+  if(S.xp>=need){S.xp -= need; S.lvl++; toast(`⭐ Level Up! Lv ${S.lvl}`,'ok'); floatRew(`LV ${S.lvl}!`)}
+}
+
+/* ============ ACTIONS ============ */
+function claimAllHome(){
+  const g = collect();
+  if(g<0.01){ toast('Nothing to claim yet','err'); return; }
+  floatRew(`+${fmt(g)} MLK`);
+  renderAll();
+}
+function freeMilk(){
+  if(Date.now() < S.freeMilkNext){ toast('Not ready yet','err'); return; }
+  showAd(()=>{
+    const amt = 25 + Math.floor(Math.random()*15);
+    S.balance += amt; S.lifetime += amt; S.today.v += amt; S.freeMilkNext = Date.now()+3600000;
+    save(); floatRew(`+${amt} MLK`); toast(`+${amt} MLK claimed`,'ok'); renderAll();
+  });
+}
+function claimDaily(){
+  if(Date.now() < S.dailyNext){ toast('Already claimed today','err'); return; }
+  showAd(()=>{
+    S.balance += 15; S.lifetime += 15; S.today.v += 15;
+    S.streak++; S.dailyNext = Date.now()+86400000;
+    save(); floatRew('+15 MLK 🎁'); toast(`Daily +15 MLK · ${S.streak}🔥`,'ok'); renderAll();
+  });
+}
+function quickBoost(){
+  if(S.boostUntil > Date.now()){ toast('Boost already active','err'); return; }
+  showAd(()=>{
+    S.boostUntil = Date.now() + 30*60*1000;
+    save(); toast('⚡ 2x boost for 30 min!','ok'); renderAll();
+  });
+}
+function buyBottle(id){
+  const d = BOTTLE_DEFS.find(x=>x.id===id);
+  if(S.balance < d.price){ toast('Not enough MLK','err'); return; }
+  if(S.bottles.length >= 10){ toast('All slots full (10/10)','err'); return; }
+  S.balance -= d.price; S.bottles.push({id, at:Date.now()});
+  save(); floatRew(`🥛 ${d.name}`); toast(`Bought ${d.name}!`,'ok'); renderAll();
+}
+
+/* ============ MONETAG AD ============ */
+function showAd(cb){
+  toast('Loading ad…','ok');
+  if(typeof show_11239209 === 'function'){
+    show_11239209().then(()=>{ toast('Ad complete ✓','ok'); cb?.(); })
+    .catch(err=>{ console.warn(err); toast('Ad unavailable, rewarded anyway','ok'); cb?.(); });
+  } else {
+    // Fallback if SDK blocked / not loaded
+    setTimeout(()=>{ toast('Ad simulated (SDK offline)','ok'); cb?.(); }, 900);
+  }
+}
+
+/* ============ TASKS ============ */
+let taskCat = 'all';
+function filterTasks(c){
+  taskCat = c;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.cat===c));
+  renderTasks();
+}
+function taskEligible(t){
+  if(S.tasks[t.id]?.done) return 'done';
+  if(t.req?.refs && S.refs < t.req.refs) return 'lock';
+  if(t.req?.lvl && S.lvl < t.req.lvl) return 'lock';
+  if(t.req?.bottle && !S.bottles.some(b=>b.id===t.req.bottle)) return 'lock';
+  return 'go';
+}
+function doTask(id){
+  const t = TASK_DEFS.find(x=>x.id===id);
+  const st = taskEligible(t);
+  if(st==='done'){ toast('Already claimed','err'); return; }
+  if(st==='lock'){ toast('Requirements not met','err'); return; }
+  const done = ()=>{
+    S.tasks[id] = {done:true, at:Date.now()};
+    S.balance += t.reward; S.lifetime += t.reward; S.today.v += t.reward;
+    if(t.ad) S.adsWatched += (t.count||1);
+    gainXP(t.reward);
+    save(); floatRew(`+${t.reward} MLK`); toast(`Task done +${t.reward}`,'ok'); renderAll();
+  };
+  if(t.ad){
+    let cnt = t.count||1, i=0;
+    const runOne = ()=>{ i++; showAd(()=>{ if(i>=cnt) done(); else runOne(); }); };
+    runOne();
+  } else if(t.url){
+    window.open(t.url,'_blank'); setTimeout(done, 1500);
+  } else {
+    done();
+  }
+}
+
+/* ============ REFER ============ */
+function copyRef(){
+  const url = `https://t.me/dairydash_bot/farm?startapp=${S.refCode}`;
+  navigator.clipboard?.writeText(url).then(()=>toast('Link copied ✓','ok')).catch(()=>toast('Copy failed','err'));
+}
+function shareRef(){
+  const url = `https://t.me/dairydash_bot/farm?startapp=${S.refCode}`;
+  const msg = `🐄 Join me on DairyDash! Farm milk & earn USDT. Bonus 50 MLK for both of us!\n${url}`;
+  if(TG?.openTelegramLink){ TG.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(msg)}`); }
+  else if(navigator.share){ navigator.share({title:'DairyDash', text:msg, url}); }
+  else{ copyRef(); }
+}
+function simRefer(){
+  S.refs++; S.refEarned += 50; S.balance += 50; S.lifetime += 50;
+  save(); floatRew('+50 MLK 👥'); toast(`New friend! +50 MLK (Total: ${S.refs})`,'ok'); renderAll();
+}
+
+/* ============ CONVERT ============ */
+function calcConv(){
+  const v = parseFloat(document.getElementById('convAmt').value)||0;
+  document.getElementById('convGet').textContent = (v*RATE_USDT).toFixed(6)+' USDT';
+}
+function maxConv(){ document.getElementById('convAmt').value = Math.floor(S.balance); calcConv(); }
+function doConvert(){
+  const v = parseFloat(document.getElementById('convAmt').value)||0;
+  if(v<100){ toast('Min 100 MLK','err'); return; }
+  if(v>S.balance){ toast('Insufficient MLK','err'); return; }
+  S.balance -= v; S.usdt += v*RATE_USDT;
+  save(); floatRew(`+${(v*RATE_USDT).toFixed(6)} USDT`); toast('Converted ✓','ok');
+  document.getElementById('convAmt').value=''; calcConv(); renderAll();
+}
+
+/* ============ NAV & UI ============ */
+function go(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelector(`.page[data-page="${p}"]`).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(x=>x.classList.toggle('on', x.dataset.nav===p));
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function toast(msg, type='ok'){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show '+type;
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+function floatRew(txt){
+  const el = document.createElement('div');
+  el.className='float-reward'; el.textContent=txt;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 1300);
+}
+function fmt(n){ n=+n||0; if(n>=1e6) return (n/1e6).toFixed(2)+'M'; if(n>=1e3) return (n/1e3).toFixed(1)+'k'; return n.toFixed(n<10?2:0); }
+function fmtCd(ms){ if(ms<=0) return 'Ready'; const s=Math.floor(ms/1000); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60; return (h?h+'h ':'')+String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0'); }
+
+/* ============ RENDER ============ */
+function renderTop(){
+  const p = pendingMilk();
+  const displayBal = S.balance + p;
+  document.getElementById('balance').textContent = fmt(displayBal);
+  document.getElementById('usdEq').textContent = '≈ $'+(displayBal*RATE_USDT).toFixed(6)+' USDT';
+  document.getElementById('rate').textContent = fmt(totalRate());
+  document.getElementById('slots').textContent = S.bottles.length+'/10';
+  document.getElementById('lifetime').textContent = fmt(S.lifetime);
+  document.getElementById('streakTop').textContent = `🔥 ${S.streak} day${S.streak===1?'':'s'}`;
+  document.getElementById('streakLine').textContent = `Streak: ${S.streak} days`;
+  document.getElementById('dailyCd').textContent = S.dailyNext>Date.now() ? 'Next: '+fmtCd(S.dailyNext-Date.now()) : 'Ready to claim!';
+  document.getElementById('dailyBtn').disabled = S.dailyNext>Date.now();
+  document.getElementById('dailyBtn').style.opacity = S.dailyNext>Date.now() ? .5 : 1;
+  document.getElementById('dailyBtn').textContent = S.dailyNext>Date.now() ? 'Claimed' : 'Watch Ad';
+  document.getElementById('freeCd').textContent = S.freeMilkNext>Date.now() ? fmtCd(S.freeMilkNext-Date.now()) : 'Ready';
+  document.getElementById('chDelta').textContent = `+${fmt(S.today.v)} 24h ▲`;
+}
+function renderPending(){
+  document.getElementById('pending').textContent = fmt(pendingMilk());
+  document.getElementById('ePending').textContent = fmt(pendingMilk())+' MLK';
+  document.getElementById('ePrint').textContent = fmt(totalRate())+' MLK/hr';
+}
+function renderBottles(){
+  const wrap = document.getElementById('bottleList');
+  wrap.innerHTML = BOTTLE_DEFS.map(b=>{
+    const owned = S.bottles.filter(x=>x.id===b.id).length;
+    const can = S.balance >= b.price && S.bottles.length<10;
+    return `<div class="bottle" data-r="${b.id}">
+      <div class="bicon">${b.emoji}</div>
+      <div class="binfo">
+        <div class="btitle">${b.name} <span class="btag">${b.tag}</span> ${owned?`<span style="color:var(--muted);font-size:11px">×${owned}</span>`:''}</div>
+        <div class="bdesc">${b.desc}</div>
+        <div class="brate">+${b.rate} MLK/hr · Price ${fmt(b.price)} MLK</div>
+      </div>
+      <button class="bbuy ${can?'can':''}" ${can?'':'disabled'} onclick="buyBottle('${b.id}')">Buy</button>
+    </div>`;
+  }).join('');
+  document.getElementById('bottleCount').textContent = `${S.bottles.length}/10 bottles`;
+  document.getElementById('effVal').textContent = (S.bottles.length?Math.min(100,80+S.bottles.length*2):100)+'%';
+  document.getElementById('effBar').style.width = (S.bottles.length?Math.min(100,80+S.bottles.length*2):100)+'%';
+}
+function renderTasks(){
+  const filtered = TASK_DEFS.filter(t=>taskCat==='all'||t.cat===taskCat);
+  const done = TASK_DEFS.filter(t=>S.tasks[t.id]?.done).length;
+  document.getElementById('taskProg').textContent = `${done}/${TASK_DEFS.length} done`;
+  document.getElementById('taskBar').style.width = ((done/TASK_DEFS.length)*100)+'%';
+  document.getElementById('taskList').innerHTML = filtered.length ? filtered.map(t=>{
+    const st = taskEligible(t);
+    const label = st==='done'?'✓ Done':st==='lock'?'🔒 Locked':t.ad?'Watch Ad':'Start';
+    return `<div class="task">
+      <div class="ticon">${t.icon}</div>
+      <div class="tinfo"><b>${t.name}</b><p>${t.cat.toUpperCase()}${t.count?` · ${t.count} ads`:''}</p><div class="treward">+${t.reward} MLK</div></div>
+      <button class="tbtn ${st==='done'?'done':''}" ${st==='lock'?'disabled':''} onclick="doTask('${t.id}')">${label}</button>
+    </div>`;
+  }).join('') : '<div class="empty">No tasks in this category</div>';
+}
+let lbCat = 'earn';
+function lbTab(el,c){ document.querySelectorAll('.page[data-page="lb"] .tab').forEach(t=>t.classList.remove('on')); el.classList.add('on'); lbCat=c; renderLB(); }
+function renderLB(){
+  const you = ['You (@'+S.user+')', Math.floor(S.lifetime)];
+  const arr = [...LB_SEED.map(x=>[...x]), you];
+  if(lbCat==='ref') arr.forEach(x=>x[1]=Math.floor(x[1]/8000));
+  if(lbCat==='bal') arr.forEach(x=>x[1]=Math.floor(x[1]/3));
+  if(lbCat==='ref' && arr[arr.length-1][0].startsWith('You')) arr[arr.length-1][1] = S.refs;
+  if(lbCat==='bal' && arr[arr.length-1][0].startsWith('You')) arr[arr.length-1][1] = Math.floor(S.balance);
+  arr.sort((a,b)=>b[1]-a[1]);
+  document.getElementById('lbList').innerHTML = arr.slice(0,15).map((r,i)=>{
+    const rc = i===0?'g1':i===1?'g2':i===2?'g3':'';
+    const isYou = r[0].startsWith('You');
+    const unit = lbCat==='ref'?'refs':'MLK';
+    return `<div class="lb-item" style="${isYou?'border-color:var(--violet);background:linear-gradient(90deg,rgba(139,92,246,.12),transparent)':''}">
+      <div class="lb-rank ${rc}">${i+1}</div>
+      <div class="lb-av">${r[0][0].toUpperCase()}</div>
+      <div class="lb-info"><b>${isYou?r[0]:'@'+r[0]}</b><span>${i<3?'Legendary Farmer':i<7?'Diamond Farmer':'Epic Farmer'}</span></div>
+      <div class="lb-val">${fmt(r[1])}<small>${unit}</small></div>
+    </div>`;
+  }).join('');
+}
+function renderProfile(){
+  document.getElementById('pname').textContent = '@'+S.user;
+  document.getElementById('pav').textContent = S.user[0]?.toUpperCase()||'?';
+  document.getElementById('avatar').textContent = S.user[0]?.toUpperCase()||'?';
+  document.getElementById('plvl').textContent = S.lvl;
+  document.getElementById('pxp').textContent = S.xp;
+  document.getElementById('pxpMax').textContent = S.lvl*100;
+  document.getElementById('xpBar').style.width = ((S.xp/(S.lvl*100))*100)+'%';
+  document.getElementById('pbal').textContent = fmt(S.balance);
+  document.getElementById('pbalUsd').textContent = '≈ $'+(S.balance*RATE_USDT).toFixed(6);
+  document.getElementById('pusdt').textContent = S.usdt.toFixed(6);
+  document.getElementById('eToday').textContent = fmt(S.today.v);
+  document.getElementById('eWeek').textContent = fmt(S.week.v);
+  document.getElementById('eMonth').textContent = fmt(S.month.v);
+  document.getElementById('eAll').textContent = fmt(S.all);
+}
+function renderRefer(){
+  document.getElementById('refCount').textContent = S.refs;
+  document.getElementById('refActive').textContent = Math.floor(S.refs*0.4);
+  document.getElementById('refEarned').innerHTML = fmt(S.refEarned)+' <span style="font-size:16px;color:var(--muted)">MLK earned</span>';
+  document.getElementById('refLink').textContent = `https://t.me/dairydash_bot/farm?startapp=${S.refCode}`;
+}
+function renderAll(){ renderTop(); renderPending(); renderBottles(); renderTasks(); renderRefer(); renderLB(); renderProfile(); }
+
+function resetGame(){ if(confirm('Reset all progress?')){ localStorage.removeItem('dairydash'); location.reload(); } }
+</script>
+</body>
+</html>,
